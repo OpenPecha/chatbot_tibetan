@@ -1,19 +1,31 @@
 import os
-import random
-import time
-from typing import Dict
+from typing import Dict, List
 
 import gradio as gr
+import requests
 
-API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 ROLE_USER = "user"
 ROLE_ASSISTANT = "assistant"
-HISTROY = Dict[str, str]  # {"role": "user|assistant", "content": "text"}
+HISTROY = List[Dict[str, str]]  # [{"role": "user|assistant", "content": "text"},...]
 
 
 def make_completion(history):
-    return random.choice(["Yes", "No"])
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
+    }
+    resp = requests.post(
+        url="https://api.openai.com/v1/chat/completions",
+        json={"model": "gpt-3.5-turbo", "messages": history},
+        headers=headers,
+    )
+    if resp.status_code == 200:
+        return resp.json()["choices"][0]["message"]["content"]
+    else:
+        print(resp.content)
+        return "Sorry, I don't understand."
 
 
 def user(user_message: str, history: list):
