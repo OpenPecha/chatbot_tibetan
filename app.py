@@ -12,28 +12,36 @@ ROLE_ASSISTANT = "assistant"
 HISTROY = Dict[str, str]  # {"role": "user|assistant", "content": "text"}
 
 
-def user(user_message, history):
+def make_completion(history):
+    return random.choice(["Yes", "No"])
+
+
+def user(user_message: str, history: list):
     return "", history + [[user_message, None]]
 
 
-def bot(history):
-    bot_message = random.choice(["Yes", "No"])
-    history[-1][1] = bot_message
-    time.sleep(1)
-    return history
+def bot(input: str, history: list):
+    history.append({"role": ROLE_USER, "content": input})
+    response = make_completion(history)
+    history.append({"role": ROLE_ASSISTANT, "content": response})
+    messages = [
+        (history[i]["content"], history[i + 1]["content"])
+        for i in range(0, len(history) - 1, 2)
+    ]
+    return messages, history, ""
 
 
 with gr.Blocks() as demo:
-    history = gr.Chatbot(label="Tibetan Chatbot").style(height=750)
-
+    history = gr.State(value=[])
+    chatbot = gr.Chatbot(label="Tibetan Chatbot").style(height=750)
     msg = gr.Textbox(
         show_label=False, placeholder="Type a message here and press enter"
     )
-    msg.submit(user, [msg, history], [msg, history], queue=False).then(
-        bot, history, history
+    msg.submit(
+        fn=bot, inputs=[msg, history], outputs=[chatbot, history, msg], queue=False
     )
 
     clear = gr.Button("New Chat")
-    clear.click(lambda: None, None, history, queue=False)
+    clear.click(lambda: None, None, chatbot, queue=False)
 
 demo.launch()
