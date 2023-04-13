@@ -9,4 +9,9 @@ app_file: app.py
 pinned: false
 ---
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+<iframe
+	src="https://openpecha-chatbot-tibetan.hf.space"
+	frameborder="0"
+	width="850"
+	height="450"
+></iframe>
