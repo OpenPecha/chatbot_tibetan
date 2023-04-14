@@ -1,5 +1,6 @@
 import os
 import time
+import uuid
 from typing import Dict, List, Tuple
 
 import gradio as gr
@@ -8,7 +9,7 @@ import requests
 # Environment Variables
 DEBUG = bool(os.getenv("DEBUG", False))
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-BING_TRANSLATE_KEY = os.getenv("BING_TRANSLATE_KEY")
+BING_TRANSLATE_API_KEY = os.getenv("BING_TRANSLATE_API_KEY")
 
 # Type Definitions
 ROLE_USER = "user"
@@ -25,12 +26,14 @@ def bing_translate(text: str, from_lang: str, to_lang: str):
             return "ཀཀཀཀཀཀ"
         return "aaaaa"
     headers = {
+        "Ocp-Apim-Subscription-Key": BING_TRANSLATE_API_KEY,
         "Content-Type": "application/json",
-        "Ocp-Apim-Subscription-Key": BING_TRANSLATE_KEY,
+        "Ocp-Apim-Subscription-Region": "eastus",
+        "X-ClientTraceId": str(uuid.uuid4()),
     }
     resp = requests.post(
-        url="https://api.cognitive.microsofttranslator.com/translate?api-version=3.0",
-        params={"from": from_lang, "to": to_lang},
+        url="https://api.cognitive.microsofttranslator.com/translate",
+        params={"api-version": "3.0", "from": from_lang, "to": to_lang},
         json=[{"text": text}],
         headers=headers,
     )
