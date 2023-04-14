@@ -60,8 +60,9 @@ def make_completion(history):
         return "Sorry, I don't understand."
 
 
-def user(user_message: str, history: list):
-    return "", history + [[user_message, None]]
+def user(input_bo: str, history_bo: list):
+    history_bo.append([input_bo, None])
+    return "", history_bo
 
 
 def bot(input_bo: str, history_bo: list, history_en: list):
@@ -71,31 +72,34 @@ def bot(input_bo: str, history_bo: list, history_en: list):
     response_en = make_completion(history_en)
     resopnse_bo = bing_translate(response_en, "en", "bo")
     history_en.append({"role": ROLE_ASSISTANT, "content": response_en})
-    history_bo.append((input_bo, resopnse_bo))
+    history_bo[-1][1] = resopnse_bo
     if DEBUG:
         print("------------------------")
         print(history_bo)
         print(history_en)
         print("------------------------")
-    return history_bo, history_en, ""
+    return history_bo, history_en
 
 
 with gr.Blocks() as demo:
     history_en = gr.State(value=[])
-    history_bo = gr.State(value=[])
-    chatbot = gr.Chatbot(label="Tibetan Chatbot").style(height=750)
-    msg = gr.Textbox(
+    history_bo = gr.Chatbot(label="Tibetan Chatbot").style(height=750)
+    input_bo = gr.Textbox(
         show_label=False, placeholder="Type a message here and press enter"
     )
     print(DEBUG)
-    msg.submit(
-        fn=bot,
-        inputs=[msg, history_bo, history_en],
-        outputs=[chatbot, history_en, msg],
+    input_bo.submit(
+        fn=user,
+        inputs=[input_bo, history_bo],
+        outputs=[input_bo, history_bo],
         queue=False,
+    ).then(
+        fn=bot,
+        inputs=[input_bo, history_bo, history_en],
+        outputs=[history_bo, history_en],
     )
 
     clear = gr.Button("New Chat")
-    clear.click(lambda: None, None, chatbot, queue=False)
+    clear.click(lambda: None, None, history_bo, queue=False)
 
 demo.launch()
