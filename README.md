@@ -1,6 +1,6 @@
 ---
 title: Chatbot Tibetan
-emoji: 🏃
+emoji: 🤖
 colorFrom: green
 colorTo: purple
 sdk: gradio
