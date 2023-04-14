@@ -5,11 +5,12 @@ from typing import Dict, List, Tuple
 import gradio as gr
 import requests
 
+# Environment Variables
 DEBUG = bool(os.getenv("DEBUG", False))
-
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-BING_TTRANSLATE_KEY = os.getenv("BING_TRANSLATE_KEY")
+BING_TRANSLATE_KEY = os.getenv("BING_TRANSLATE_KEY")
 
+# Type Definitions
 ROLE_USER = "user"
 ROLE_ASSISTANT = "assistant"
 CHATGPT_MSG = Dict[str, str]  # {"role": "user|assistant", "content": "text"}
@@ -25,7 +26,7 @@ def bing_translate(text: str, from_lang: str, to_lang: str):
         return "aaaaa"
     headers = {
         "Content-Type": "application/json",
-        "Ocp-Apim-Subscription-Key": BING_TTRANSLATE_KEY,
+        "Ocp-Apim-Subscription-Key": BING_TRANSLATE_KEY,
     }
     resp = requests.post(
         url="https://api.cognitive.microsofttranslator.com/translate?api-version=3.0",
@@ -66,7 +67,17 @@ def user(input_bo: str, history_bo: list):
 
 
 def bot(input_bo: str, history_bo: list, history_en: list):
-    print(DEBUG)
+    """Translate user input to English, send to OpenAI, translate response to Tibetan, and return to user.
+
+    Args:
+        input_bo (str): Tibetan input from user
+        history_bo (CHATBOT_HISTORY): Tibetan history of gradio chatbot
+        history_en (CHATGPT_HISTORY): English history of OpenAI ChatGPT
+
+    Returns:
+        history_bo (CHATBOT_HISTORY): Tibetan history of gradio chatbot
+        history_en (CHATGPT_HISTORY): English history of OpenAI ChatGPT
+    """
     input_en = bing_translate(input_bo, "bo", "en")
     history_en.append({"role": ROLE_USER, "content": input_en})
     response_en = make_completion(history_en)
@@ -87,7 +98,6 @@ with gr.Blocks() as demo:
     input_bo = gr.Textbox(
         show_label=False, placeholder="Type a message here and press enter"
     )
-    print(DEBUG)
     input_bo.submit(
         fn=user,
         inputs=[input_bo, history_bo],
