@@ -21,6 +21,10 @@ CHATGPT_HISTROY = List[CHATGPT_MSG]
 CHATBOT_MSG = Tuple[str, str]  # (user_message, bot_response)
 CHATBOT_HISTORY = List[CHATBOT_MSG]
 
+# Constants
+LANG_BO = "bo"
+LANG_ZH = "zh-Hans"
+
 
 def bing_translate(text: str, from_lang: str, to_lang: str):
     if DEBUG:
@@ -71,11 +75,11 @@ def user(input_bo: str, history_bo: list):
     return "", history_bo
 
 
-def store_chat(chat_id: str, history_bo: list, history_en):
+def store_chat(chat_id: str, history_bo: list, history_zh):
     bo_msg_pair = history_bo[-1]
-    store_message_pair(chat_id, bo_msg_pair, "bo")
-    en_msg_pair = (history_en[-1]["content"], history_en[-2]["content"])
-    store_message_pair(chat_id, en_msg_pair, "en")
+    store_message_pair(chat_id, bo_msg_pair, LANG_BO)
+    en_msg_pair = (history_zh[-1]["content"], history_zh[-2]["content"])
+    store_message_pair(chat_id, en_msg_pair, LANG_ZH)
 
 
 def bot(history_bo: list, history_en: list, request: gr.Request):
@@ -91,10 +95,10 @@ def bot(history_bo: list, history_en: list, request: gr.Request):
         history_en (CHATGPT_HISTORY): English history of OpenAI ChatGPT
     """
     input_bo = history_bo[-1][0]
-    input_en = bing_translate(input_bo, "bo", "zh-Hans")
+    input_en = bing_translate(input_bo, LANG_BO, LANG_ZH)
     history_en.append({"role": ROLE_USER, "content": input_en})
     response_en = make_completion(history_en)
-    resopnse_bo = bing_translate(response_en, "zh-Hans", "bo")
+    resopnse_bo = bing_translate(response_en, LANG_ZH, LANG_BO)
     history_en.append({"role": ROLE_ASSISTANT, "content": response_en})
     history_bo[-1][1] = resopnse_bo
     if DEBUG:
@@ -103,8 +107,9 @@ def bot(history_bo: list, history_en: list, request: gr.Request):
         print(history_en)
         print("------------------------")
 
-    chat_id = request.client.host
-    store_chat(chat_id, history_bo, history_en)
+    store_chat(
+        chat_id=request.client.host, history_bo=history_bo, history_zh=history_en
+    )
     return history_bo, history_en
 
 
