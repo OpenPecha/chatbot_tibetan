@@ -1,5 +1,6 @@
 import json
 import uuid
+from datetime import datetime
 from typing import Tuple
 
 import boto3
@@ -8,7 +9,7 @@ dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
 all_chats_table = dynamodb.Table("ChatbotTibetanAllChats")
 
 
-def store_message_pair(chat_id: str, msg_pair: Tuple[str, str], lang: str, order: int):
+def store_message_pair(chat_id: str, msg_pair: Tuple[str, str], lang: str):
     """Store the chat history to DynamoDB
 
     Args:
@@ -19,13 +20,13 @@ def store_message_pair(chat_id: str, msg_pair: Tuple[str, str], lang: str, order
     """
 
     # Add the new message to the chat history
-    msg_pair_id = uuid.uuid4().hex[:4]
+    msg_pair_id = uuid.uuid4().hex[:10]
     response = all_chats_table.put_item(
         Item={
             "msg_pair_id": msg_pair_id,
             "msg_pair": json.dumps(msg_pair, ensure_ascii=False),
             "lang": lang,
-            "order": order,
+            "created_at": datetime.now().isoformat(),
             "chat_id": chat_id,
         }
     )
@@ -41,5 +42,5 @@ if __name__ == "__main__":
         ("User", "Hello, how are you?"),
         ("Chatbot", "I am fine, thank you!"),
     ]
-    for i, msg_pair in enumerate(chat_history):
-        store_message_pair(chat_id, msg_pair, "en", i)
+    for msg_pair in chat_history:
+        store_message_pair(chat_id, msg_pair, "en")

@@ -71,14 +71,14 @@ def user(input_bo: str, history_bo: list):
     return "", history_bo
 
 
-def store_chat(chat_id: str, history_bo: list, history_en, msg_order: int):
+def store_chat(chat_id: str, history_bo: list, history_en):
     bo_msg_pair = history_bo[-1]
-    store_message_pair(chat_id, bo_msg_pair, "bo", msg_order)
+    store_message_pair(chat_id, bo_msg_pair, "bo")
     en_msg_pair = (history_en[-1]["content"], history_en[-2]["content"])
-    store_message_pair(chat_id, en_msg_pair, "en", msg_order)
+    store_message_pair(chat_id, en_msg_pair, "en")
 
 
-def bot(history_bo: list, history_en: list, msg_order: int, request: gr.Request):
+def bot(history_bo: list, history_en: list, request: gr.Request):
     """Translate user input to English, send to OpenAI, translate response to Tibetan, and return to user.
 
     Args:
@@ -104,15 +104,12 @@ def bot(history_bo: list, history_en: list, msg_order: int, request: gr.Request)
         print("------------------------")
 
     chat_id = request.client.host
-    store_chat(chat_id, history_bo, history_en, msg_order)
-    msg_order += 1
-    print(chat_id, msg_order)
-    return history_bo, history_en, msg_order
+    store_chat(chat_id, history_bo, history_en)
+    return history_bo, history_en
 
 
 with gr.Blocks() as demo:
     history_en = gr.State(value=[])
-    msg_order = gr.State(value=0)
     history_bo = gr.Chatbot(label="Tibetan Chatbot").style(height=750)
     input_bo = gr.Textbox(
         show_label=False, placeholder="Type a message here and press enter"
@@ -124,8 +121,8 @@ with gr.Blocks() as demo:
         queue=False,
     ).then(
         fn=bot,
-        inputs=[history_bo, history_en, msg_order],
-        outputs=[history_bo, history_en, msg_order],
+        inputs=[history_bo, history_en],
+        outputs=[history_bo, history_en],
     )
 
     clear = gr.Button("New Chat")
