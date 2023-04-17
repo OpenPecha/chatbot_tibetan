@@ -23,7 +23,7 @@ def store_message_pair(chat_id: str, msg_pair: Tuple[str, str], lang: str, order
     response = all_chats_table.put_item(
         Item={
             "msg_pair_id": msg_pair_id,
-            "msg_pair": json.dumps(msg_pair),
+            "msg_pair": json.dumps(msg_pair, ensure_ascii=False),
             "lang": lang,
             "order": order,
             "chat_id": chat_id,

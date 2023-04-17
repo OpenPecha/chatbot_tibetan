@@ -6,6 +6,8 @@ from typing import Dict, List, Tuple
 import gradio as gr
 import requests
 
+from store import store_message_pair
+
 # Environment Variables
 DEBUG = bool(os.getenv("DEBUG", False))
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -22,7 +24,7 @@ CHATBOT_HISTORY = List[CHATBOT_MSG]
 
 def bing_translate(text: str, from_lang: str, to_lang: str):
     if DEBUG:
-        if from_lang == "en":
+        if from_lang != "bo":
             return "ཀཀཀཀཀཀ"
         return "aaaaa"
     headers = {
@@ -69,7 +71,14 @@ def user(input_bo: str, history_bo: list):
     return "", history_bo
 
 
-def bot(history_bo: list, history_en: list):
+def store_chat(chat_id: str, history_bo: list, history_en, msg_order: int):
+    bo_msg_pair = history_bo[-1]
+    store_message_pair(chat_id, bo_msg_pair, "bo", msg_order)
+    en_msg_pair = (history_en[-1]["content"], history_en[-2]["content"])
+    store_message_pair(chat_id, en_msg_pair, "en", msg_order)
+
+
+def bot(history_bo: list, history_en: list, msg_order: int, request: gr.Request):
     """Translate user input to English, send to OpenAI, translate response to Tibetan, and return to user.
 
     Args:
@@ -88,16 +97,22 @@ def bot(history_bo: list, history_en: list):
     resopnse_bo = bing_translate(response_en, "zh-Hans", "bo")
     history_en.append({"role": ROLE_ASSISTANT, "content": response_en})
     history_bo[-1][1] = resopnse_bo
-    # if DEBUG:
-    print("------------------------")
-    print(history_bo)
-    print(history_en)
-    print("------------------------")
-    return history_bo, history_en
+    if DEBUG:
+        print("------------------------")
+        print(history_bo)
+        print(history_en)
+        print("------------------------")
+
+    chat_id = request.client.host
+    store_chat(chat_id, history_bo, history_en, msg_order)
+    msg_order += 1
+    print(chat_id, msg_order)
+    return history_bo, history_en, msg_order
 
 
 with gr.Blocks() as demo:
     history_en = gr.State(value=[])
+    msg_order = gr.State(value=0)
     history_bo = gr.Chatbot(label="Tibetan Chatbot").style(height=750)
     input_bo = gr.Textbox(
         show_label=False, placeholder="Type a message here and press enter"
@@ -109,8 +124,8 @@ with gr.Blocks() as demo:
         queue=False,
     ).then(
         fn=bot,
-        inputs=[history_bo, history_en],
-        outputs=[history_bo, history_en],
+        inputs=[history_bo, history_en, msg_order],
+        outputs=[history_bo, history_en, msg_order],
     )
 
     clear = gr.Button("New Chat")
