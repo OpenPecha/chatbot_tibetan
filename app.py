@@ -131,6 +131,6 @@ with gr.Blocks() as demo:
     )
 
     clear = gr.Button("New Chat")
-    clear.click(lambda: None, None, history_bo, queue=False)
+    clear.click(lambda: [[], []], None, [history_bo, history_en], queue=False)
 
 demo.launch()
