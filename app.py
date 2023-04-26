@@ -23,7 +23,7 @@ CHATBOT_HISTORY = List[CHATBOT_MSG]
 
 # Constants
 LANG_BO = "bo"
-LANG_ZH = "zh-Hans"
+LANG_ZH = "en"
 
 
 def bing_translate(text: str, from_lang: str, to_lang: str):
