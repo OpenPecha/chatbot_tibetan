@@ -115,7 +115,7 @@ def bot(history_bo: list, history_en: list, request: gr.Request):
 
 with gr.Blocks() as demo:
     history_en = gr.State(value=[])
-    history_bo = gr.Chatbot(label="Tibetan Chatbot").style(height=750)
+    history_bo = gr.Chatbot(label="Tibetan Chatbot").style(height=650)
     input_bo = gr.Textbox(
         show_label=False, placeholder="Type a message here and press enter"
     )
