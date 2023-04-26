@@ -10,6 +10,7 @@ from store import store_message_pair
 
 # Environment Variables
 DEBUG = bool(os.getenv("DEBUG", False))
+VERBOSE = bool(os.getenv("V", False))
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 BING_TRANSLATE_API_KEY = os.getenv("BING_TRANSLATE_API_KEY")
 
@@ -101,7 +102,7 @@ def bot(history_bo: list, history_en: list, request: gr.Request):
     resopnse_bo = bing_translate(response_en, LANG_ZH, LANG_BO)
     history_en.append({"role": ROLE_ASSISTANT, "content": response_en})
     history_bo[-1][1] = resopnse_bo
-    if DEBUG:
+    if VERBOSE:
         print("------------------------")
         print(history_bo)
         print(history_en)
