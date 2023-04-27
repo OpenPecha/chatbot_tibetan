@@ -3,9 +3,6 @@ from typing import Tuple
 
 import openai
 
-USER_MSG = str
-BOT_MSG = str
-
 
 class ChatGpt:
     def __init__(self, api_key, max_tokens=4096):
@@ -17,19 +14,19 @@ class ChatGpt:
         # Set up the OpenAI API client
         openai.api_key = self.api_key
 
-    def add_message(self, role, content):
+    def add_message(self, role: str, content: str):
         self.message_history.append({"role": role, "content": content})
         self._truncate_history()
 
-    def add_system_message(self, content):
+    def add_system_message(self, content: str):
         self.add_message("system", content)
 
-    def generate_response(self, user_input) -> Tuple[USER_MSG, BOT_MSG]:
+    def generate_response(self, user_input: str) -> str:
         self.add_message("user", user_input)
         response = self._call_openai_api(self.message_history)
         self.add_message("assistant", response)
 
-        return user_input, response
+        return response
 
     def _truncate_history(self):
         while self.total_tokens > self.max_tokens:

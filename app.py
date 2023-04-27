@@ -1,11 +1,12 @@
 import os
 import time
 import uuid
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import gradio as gr
 import requests
 
+from chat import ChatGpt
 from store import store_message_pair
 
 # Environment Variables
@@ -24,7 +25,9 @@ CHATBOT_HISTORY = List[CHATBOT_MSG]
 
 # Constants
 LANG_BO = "bo"
-LANG_ZH = "en"
+LANG_MEDIUM = "en"
+
+chatbot: Optional[ChatGpt] = None
 
 
 def bing_translate(text: str, from_lang: str, to_lang: str):
@@ -51,39 +54,22 @@ def bing_translate(text: str, from_lang: str, to_lang: str):
         raise Exception("Error in translation API: ", result)
 
 
-def make_completion(history):
-    if DEBUG:
-        time.sleep(2)
-        return "aaaaa"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
-    }
-    resp = requests.post(
-        url="https://api.openai.com/v1/chat/completions",
-        json={"model": "gpt-3.5-turbo", "messages": history},
-        headers=headers,
-    )
-    if resp.status_code == 200:
-        return resp.json()["choices"][0]["message"]["content"]
-    else:
-        print(resp.content)
-        return "Sorry, I don't understand."
-
-
 def user(input_bo: str, history_bo: list):
     history_bo.append([input_bo, None])
     return "", history_bo
 
 
-def store_chat(chat_id: str, history_bo: list, history_zh):
-    bo_msg_pair = history_bo[-1]
-    store_message_pair(chat_id, bo_msg_pair, LANG_BO)
-    en_msg_pair = (history_zh[-1]["content"], history_zh[-2]["content"])
-    store_message_pair(chat_id, en_msg_pair, LANG_ZH)
+def store_chat(
+    chat_id: str,
+    msg_pair_bo: Tuple[str, str],
+    msg_pair_medium: Tuple[str, str],
+    medium_lang: str,
+):
+    store_message_pair(chat_id, msg_pair_bo, LANG_BO)
+    store_message_pair(chat_id, msg_pair_medium, medium_lang)
 
 
-def bot(history_bo: list, history_en: list, request: gr.Request):
+def bot(history_bo: list, request: gr.Request):
     """Translate user input to English, send to OpenAI, translate response to Tibetan, and return to user.
 
     Args:
@@ -95,12 +81,13 @@ def bot(history_bo: list, history_en: list, request: gr.Request):
         history_bo (CHATBOT_HISTORY): Tibetan history of gradio chatbot
         history_en (CHATGPT_HISTORY): English history of OpenAI ChatGPT
     """
+    global chatbot
+    if len(history_bo) <= 1:
+        chatbot = ChatGpt(OPENAI_API_KEY)
     input_bo = history_bo[-1][0]
-    input_en = bing_translate(input_bo, LANG_BO, LANG_ZH)
-    history_en.append({"role": ROLE_USER, "content": input_en})
-    response_en = make_completion(history_en)
-    resopnse_bo = bing_translate(response_en, LANG_ZH, LANG_BO)
-    history_en.append({"role": ROLE_ASSISTANT, "content": response_en})
+    input_ = bing_translate(input_bo, LANG_BO, LANG_MEDIUM)
+    response = chatbot.generate_response(input_)
+    resopnse_bo = bing_translate(response, LANG_MEDIUM, LANG_BO)
     history_bo[-1][1] = resopnse_bo
     if VERBOSE:
         print("------------------------")
@@ -109,9 +96,12 @@ def bot(history_bo: list, history_en: list, request: gr.Request):
         print("------------------------")
 
     store_chat(
-        chat_id=request.client.host, history_bo=history_bo, history_zh=history_en
+        chat_id=request.client.host,
+        msg_pair_bo=(input_bo, resopnse_bo),
+        msg_pair_medium=(input_, response),
+        medium_lang=LANG_MEDIUM,
     )
-    return history_bo, history_en
+    return history_bo
 
 
 with gr.Blocks() as demo:
@@ -127,11 +117,11 @@ with gr.Blocks() as demo:
         queue=False,
     ).then(
         fn=bot,
-        inputs=[history_bo, history_en],
-        outputs=[history_bo, history_en],
+        inputs=[history_bo],
+        outputs=[history_bo],
     )
 
     clear = gr.Button("New Chat")
-    clear.click(lambda: [[], []], None, [history_bo, history_en], queue=False)
+    clear.click(lambda: ("", []), None, [input_bo, history_bo], queue=False)
 
 demo.launch()
