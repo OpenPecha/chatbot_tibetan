@@ -14,6 +14,10 @@ class ChatGpt:
         # Set up the OpenAI API client
         openai.api_key = self.api_key
 
+    def clear_history(self):
+        self.message_history = []
+        self.total_tokens = 0
+
     def add_message(self, role: str, content: str):
         self.message_history.append({"role": role, "content": content})
         self._truncate_history()

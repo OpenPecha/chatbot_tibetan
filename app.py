@@ -26,7 +26,7 @@ CHATBOT_HISTORY = List[CHATBOT_MSG]
 LANG_BO = "bo"
 LANG_MEDIUM = "en"
 
-chatbot: Optional[ChatGpt] = None
+chatbot = ChatGpt(OPENAI_API_KEY)
 
 
 def bing_translate(text: str, from_lang: str, to_lang: str):
@@ -83,9 +83,6 @@ def bot(history_bo: list, chat_id: str):
         history_bo (CHATBOT_HISTORY): Tibetan history of gradio chatbot
         history_en (CHATGPT_HISTORY): English history of OpenAI ChatGPT
     """
-    global chatbot
-    if len(history_bo) <= 1:
-        chatbot = ChatGpt(OPENAI_API_KEY)
     input_bo = history_bo[-1][0]
     input_ = bing_translate(input_bo, LANG_BO, LANG_MEDIUM)
     response = chatbot.generate_response(input_)
@@ -107,6 +104,7 @@ def bot(history_bo: list, chat_id: str):
 
 
 def get_chat_id():
+    chatbot.clear_history()
     return str(uuid.uuid4())
 
 
