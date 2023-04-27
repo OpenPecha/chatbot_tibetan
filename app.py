@@ -1,5 +1,4 @@
 import os
-import time
 import uuid
 from typing import Dict, List, Optional, Tuple
 
@@ -65,11 +64,14 @@ def store_chat(
     msg_pair_medium: Tuple[str, str],
     medium_lang: str,
 ):
-    store_message_pair(chat_id, msg_pair_bo, LANG_BO)
-    store_message_pair(chat_id, msg_pair_medium, medium_lang)
+    msg_pair = {
+        "bo": msg_pair_bo,
+        medium_lang: msg_pair_medium,
+    }
+    store_message_pair(chat_id, msg_pair)
 
 
-def bot(history_bo: list, request: gr.Request):
+def bot(history_bo: list, chat_id: str):
     """Translate user input to English, send to OpenAI, translate response to Tibetan, and return to user.
 
     Args:
@@ -96,7 +98,7 @@ def bot(history_bo: list, request: gr.Request):
         print("------------------------")
 
     store_chat(
-        chat_id=request.client.host,
+        chat_id=chat_id,
         msg_pair_bo=(input_bo, resopnse_bo),
         msg_pair_medium=(input_, response),
         medium_lang=LANG_MEDIUM,
@@ -104,11 +106,17 @@ def bot(history_bo: list, request: gr.Request):
     return history_bo
 
 
+def get_chat_id():
+    return str(uuid.uuid4())
+
+
 with gr.Blocks() as demo:
+    chat_id = gr.State(value=get_chat_id)
     history_en = gr.State(value=[])
     history_bo = gr.Chatbot(label="Tibetan Chatbot").style(height=650)
     input_bo = gr.Textbox(
-        show_label=False, placeholder="Type a message here and press enter"
+        show_label=False,
+        placeholder=f"Type a message here and press enter",
     )
     input_bo.submit(
         fn=user,
@@ -117,11 +125,11 @@ with gr.Blocks() as demo:
         queue=False,
     ).then(
         fn=bot,
-        inputs=[history_bo],
+        inputs=[history_bo, chat_id],
         outputs=[history_bo],
     )
 
     clear = gr.Button("New Chat")
-    clear.click(lambda: ("", []), None, [input_bo, history_bo], queue=False)
+    clear.click(lambda: [], None, history_bo, queue=False)
 
 demo.launch()

@@ -1,7 +1,7 @@
 import json
 import uuid
 from datetime import datetime
-from typing import Tuple
+from typing import Dict, Tuple
 
 import boto3
 
@@ -9,7 +9,7 @@ dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
 all_chats_table = dynamodb.Table("ChatbotTibetanAllChats")
 
 
-def store_message_pair(chat_id: str, msg_pair: Tuple[str, str], lang: str):
+def store_message_pair(chat_id: str, msg_pair: Dict[str, Tuple[str, str]]):
     """Store the chat history to DynamoDB
 
     Args:
@@ -25,7 +25,6 @@ def store_message_pair(chat_id: str, msg_pair: Tuple[str, str], lang: str):
         Item={
             "msg_pair_id": msg_pair_id,
             "msg_pair": json.dumps(msg_pair, ensure_ascii=False),
-            "lang": lang,
             "created_at": datetime.now().isoformat(),
             "chat_id": chat_id,
         }
@@ -35,12 +34,9 @@ def store_message_pair(chat_id: str, msg_pair: Tuple[str, str], lang: str):
 
 if __name__ == "__main__":
     # Replace with your own DynamoDB table name and chat ID
-    chat_id = uuid.uuid4().hex[:4]
+    chat_id = str(uuid.uuid4())
 
     # Replace with your own chat history (list of tuples or list of dictionaries)
-    chat_history = [
-        ("User", "Hello, how are you?"),
-        ("Chatbot", "I am fine, thank you!"),
-    ]
-    for msg_pair in chat_history:
-        store_message_pair(chat_id, msg_pair, "en")
+    msg_pair = {"bo": ("hello", "hello"), "en": ("hello", "hello")}
+    response = store_message_pair(chat_id, msg_pair)
+    print(response)
