@@ -112,7 +112,7 @@ def get_chat_id():
 css_fn = Path(__file__).resolve().parent / "static" / "app.css"
 assert css_fn.exists() and css_fn.is_file(), f"CSS file not found: {css_fn}"
 
-with gr.Blocks(css=str(css_fn)) as demo:
+with gr.Blocks(css=str(css_fn), theme=gr.themes.Soft()) as demo:
     chat_id = gr.State(value=get_chat_id)
     history_en = gr.State(value=[])
     history_bo = gr.Chatbot(label="Tibetan Chatbot", elem_id="maiChatHistory").style(
