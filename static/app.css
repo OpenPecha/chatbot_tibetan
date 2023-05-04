@@ -1,0 +1,17 @@
+#maiChatHistory .message-wrap div {
+    font-size: 30px;
+}
+
+#maiChatInput textarea {
+    font-size: 30px
+}
+
+@media screen and (min-width: 768px) {
+    #maiChatInput textarea {
+        font-size: 20px
+    }
+
+    #maiChatHistory .message-wrap div {
+        font-size: 20px;
+    }
+}

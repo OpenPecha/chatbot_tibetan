@@ -1,6 +1,7 @@
 import os
 import uuid
-from typing import Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 import gradio as gr
 import requests
@@ -108,14 +109,21 @@ def get_chat_id():
     return str(uuid.uuid4())
 
 
-with gr.Blocks() as demo:
+css_fn = Path(__file__).resolve().parent / "static" / "app.css"
+assert css_fn.exists() and css_fn.is_file(), f"CSS file not found: {css_fn}"
+
+with gr.Blocks(css=str(css_fn)) as demo:
     chat_id = gr.State(value=get_chat_id)
     history_en = gr.State(value=[])
-    history_bo = gr.Chatbot(label="Tibetan Chatbot").style(height=650)
+    history_bo = gr.Chatbot(label="Tibetan Chatbot", elem_id="maiChatHistory").style(
+        height=650
+    )
     input_bo = gr.Textbox(
         show_label=False,
-        placeholder=f"Type a message here and press enter",
+        placeholder="Type here...",
+        elem_id="maiChatInput",
     )
+    input_submit_btn = gr.Button("Submit")
     input_bo.submit(
         fn=user,
         inputs=[input_bo, history_bo],
@@ -126,8 +134,18 @@ with gr.Blocks() as demo:
         inputs=[history_bo, chat_id],
         outputs=[history_bo],
     )
+    input_submit_btn.click(
+        fn=user,
+        inputs=[input_bo, history_bo],
+        outputs=[input_bo, history_bo],
+        queue=False,
+    ).then(
+        fn=bot,
+        inputs=[history_bo, chat_id],
+        outputs=[history_bo],
+    )
 
-    clear = gr.Button("New Chat")
+    clear = gr.Button("Clear")
     clear.click(lambda: [], None, history_bo, queue=False)
 
 demo.launch()
